@@ -169,3 +169,6 @@ Let us recall some crusial code to determine the form of the input:
 * The number of bytes to be copied to `hwaddr.addr` from the `packet` is determined by the `hwaddr.len` variable. This variable is read from `*(packet + ADD_LENGTH_OFFSET) -> *(packet + 4)` so the 5th byte of the input `packet`.
 So in the 5th byte of the input `packet`, the number `135` should be placed, or in HEX `\x87`.
 * The bytes to be copied to `hwaddr.addr` from the packet are read from `packet + ADDR_OFFSET -> packet + 8` so we need to place our shell code from that place and after.
+###### Sketch attack plan
+<img src="https://github.com/igavriil/buffer-overflow/blob/master/arpsender_attack.png" width="650" height="200" />
+
