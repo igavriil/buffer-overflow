@@ -58,7 +58,7 @@ Program received signal SIGSEGV, Segmentation fault.
 ```
 So the size of the buffer to overwrite the `$eip` is 756.
 ###### Sketch memory layout and attack plan
-<img src="https://github.com/igavriil/buffer-overflow/blob/master/convert_attact.png" width="400" height="300" />
+<img src="https://github.com/igavriil/buffer-overflow/blob/master/convert_attact.png" width="500" height="360" />
 ###### Find the addresses needed for the attack
 ``` 
 $ gdb convert
@@ -150,4 +150,22 @@ Stack level 0, frame at 0xbffff500:
   ebp at 0xbffff4f8, eip at 0xbffff4fc
 ````
 ###### Sketch memory layout
-<img src="https://github.com/igavriil/buffer-overflow/blob/master/arpsender_sketch.png" width="400" height="300" />
+<img src="https://github.com/igavriil/buffer-overflow/blob/master/arpsender_sketch.png" width="300" height="440" />
+###### Deeper understand of memory and attack plan
+* The distance between `char hwaddr.addr[128]` and `char* hwaddr.hwtype` is `131 bytes`(due to big endian convention)  so we need `135 bytes` overflow on `hwaddr.addr[128]` to overwrite the `4 bytes` of the pointer.
+* The `$eip` pointer is located at `0xbffff4fc` under gdb environment.
+
+___
+* Overflow `hwaddr.addr[128]` buffer with `135 bytes` having the last `4 bytes` store the address of `$eip` pointer. In other words make the pointer `hwaddr.hwtype` pointer to point at the `$eip`.
+* Then using the expression `memcpy(hwaddr.hwtype, packet, 4);` we are writing at the `$eip` pointer. So the variable `packet` should start with an address that points to a location of the memory where the beggining of the shellcode is stored or (better) at a location where a preceding to the shellcode `NOP(\x90)` is stored. 
+
+___
+Let us recall some crusial code to determine the form of the input:
+```
+  hwaddr.len = (shsize_t) *(packet + ADDR_LENGTH_OFFSET);
+  memcpy(hwaddr.addr, packet + ADDR_OFFSET, hwaddr.len);
+  memcpy(hwaddr.hwtype, packet, 4);
+```
+* The number of bytes to be copied to `hwaddr.addr` from the `packet` is determined by the `hwaddr.len` variable. This variable is read from `*(packet + ADD_LENGTH_OFFSET) -> *(packet + 4)` so the 5th byte of the input `packet`.
+So in the 5th byte of the input `packet`, the number `135` should be placed, or in HEX `\x87`.
+* The bytes to be copied to `hwaddr.addr` from the packet are read from `packet + ADDR_OFFSET -> packet + 8` so we need to place our shell code from that place and after.
