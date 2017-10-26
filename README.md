@@ -58,7 +58,7 @@ Program received signal SIGSEGV, Segmentation fault.
 ```
 So the size of the buffer to overwrite the `$eip` is 756.
 ###### Sketch memory layout and attack plan
-<img src="(https://raw.githubusercontent.com/igavriil/buffer-overflow/master/convert_attact.png" width="500" height="360"/>
+<img src="https://raw.githubusercontent.com/igavriil/buffer-overflow/master/convert_attact.png" width="500" height="360"/>
 
 ###### Find the addresses needed for the attack
 ``` 
