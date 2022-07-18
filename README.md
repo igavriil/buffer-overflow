@@ -1,5 +1,5 @@
 # buffer-overflow
-This is an in depth exploration of buffer overflow attacks in vulnerable C/C++ programs. All programs are run in a 32-bit machine with Debian GNU/Linux 7.8. It's important to note that [Address space layout randomization](http://en.wikipedia.org/wiki/Address_space_layout_randomization) is disabled. Finally the programs are compiled with different options-flags that enable different protections. (wll become clear in the following).
+This is an in depth exploration of buffer overflow attacks in vulnerable C/C++ programs. All programs are run in a 32-bit machine with Debian GNU/Linux 7.8. It's important to note that [Address space layout randomization](http://en.wikipedia.org/wiki/Address_space_layout_randomization) is disabled. Finally the programs are compiled with different options-flags that enable different protections. (will become clear in the following).
 ___
 #### [convert](https://github.com/igavriil/buffer-overflow/blob/master/convert.c) C program
 ###### Determine protections enabled
@@ -202,12 +202,12 @@ ___
 #### [zoo](https://github.com/igavriil/buffer-overflow/blob/master/zoo.cpp) C++program
 ###### Determine protections enabled
 
-Using the methods described in the previous programs we conclude that neither of the previously mensioned defence mechanism are enabled for this program, so we dive right away to our attack.
+Using the methods described in the previous programs we conclude that neither of the previously mentioned defense mechanism are enabled for this program, so we dive right away into our attack.
 
 ###### Determine strategy for attack
 As we notice in the code the are to classes `Cow` and `Fox` that both inherit from the base class `Animal`. This base class is pretty simple: it has only one attribute, called `name` which is a char array of length 256. Also there are three methods: the two are getting and setting the `name` attribute and the third one which is virtual, the `speak` method.
 There are two interesting things in the base class enabling a succesfull attack:
-* The method `set_name` to assign a name to the animal uses the function `strcpy` to copy a buffer to the `name` attribute. This is obliously the place to overflow the `name` buffer.
+* The method `set_name` to assign a name to the animal uses the function `strcpy` to copy a buffer to the `name` attribute. This is obviously the place to overflow the `name` buffer.
 * The method `speak` is virtual, which is enough reason to consider using it for the attack. A virtual method is assigned to an object at run time. This means that when the objects are created a dynamic binding is created to calculate the address from where the function will be called.
 
 ###### Exploring and sketching the memory
